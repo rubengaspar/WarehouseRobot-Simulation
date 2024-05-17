@@ -12,3 +12,4 @@ class Package:
             :type position: Any valid data type.
         """
         self.position = position
+        self.color = "yellow"

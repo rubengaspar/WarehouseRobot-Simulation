@@ -17,6 +17,7 @@ class Robot:
         """
         self.id = id
         self.position = position
+        self.color = "blue"
 
     def move(self, direction):
         """

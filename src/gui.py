@@ -2,6 +2,8 @@ import tkinter as tk
 from grid_manager import GridManager
 from robot import Robot
 from package import Package
+from src.goal import Goal
+
 
 class WarehouseGUI:
     """WarehouseGUI class documentation
@@ -86,6 +88,9 @@ class WarehouseGUI:
         self.button_add_package = tk.Button(self.left_frame, text="Add Package", command=self.prepare_add_package)
         self.button_add_package.pack(side="top", padx=5, pady=5)
 
+        self.button_select_goal = tk.Button(self.left_frame, text="Select Goal", command=self.prepare_add_goal)
+        self.button_select_goal.pack(side="top", padx=5, pady=5)
+
         self.button_start = tk.Button(self.left_frame, text="Start", command=self.start_simulation)
         self.button_start.pack(side="top", padx=5, pady=5)
 
@@ -117,6 +122,15 @@ class WarehouseGUI:
         self.current_action = 'add_package'
         self.root.config(cursor="cross")
 
+    def prepare_add_goal(self):
+        """
+        Sets the current action to 'add_goal' and changes the cursor to a cross.
+
+        :return: None
+        """
+        self.current_action = 'add_goal'
+        self.root.config(cursor='cross')
+
     def on_canvas_click(self, event):
         """
         Handle click event on the canvas.
@@ -135,6 +149,9 @@ class WarehouseGUI:
         elif self.current_action == 'add_package':
             package = Package(position=position)
             self.grid_manager.add_package(package)
+        elif self.current_action == 'add_goal':
+            goal = Goal(position=position)
+            self.grid_manager.add_goal(goal)
 
         self.current_action = None
         self.root.config(cursor="")
@@ -151,10 +168,21 @@ class WarehouseGUI:
         """
         x = (event.x - self.padding_x) // self.cell_size
         y = (event.y - self.padding_y) // self.cell_size
-        if self.current_action in ['add_robot', 'add_package']:
-            self.highlight_position((x, y))
 
-    def highlight_position(self, position):
+        action_object_map = {
+            'add_robot': self.robot,
+            'add_package': self.package,
+            'add_goal': self.goal
+        }
+
+        if self.current_action == 'add_robot':
+            self.highlight_position((x, y), 'blue')
+        elif self.current_action == 'add_package':
+            self.highlight_position((x, y), 'red')
+        elif self.current_action == 'add_goal':
+            self.highlight_position((x, y), '')
+
+    def highlight_position(self, position, color):
         """
         Highlight the given position on the canvas.
 
@@ -166,9 +194,12 @@ class WarehouseGUI:
         x, y = position
         if 0 <= x < self.grid_manager.width and 0 <= y < self.grid_manager.height:
             self.highlight_rect = self.canvas.create_rectangle(
-                x * self.cell_size + self.padding_x, y * self.cell_size + self.padding_y,
-                (x + 1) * self.cell_size + self.padding_x, (y + 1) * self.cell_size + self.padding_y,
-                outline="red", width=2
+                x * self.cell_size + self.padding_x,
+                y * self.cell_size + self.padding_y,
+                (x + 1) * self.cell_size + self.padding_x,
+                (y + 1) * self.cell_size + self.padding_y,
+                outline=color,
+                width=2
             )
 
     def clear_highlight(self):
@@ -218,12 +249,7 @@ class WarehouseGUI:
         if self.simulation_running:
             # Example movement logic: move each robot to the right
             for robot in self.grid_manager.robots:
-                new_position = (robot.position[0] + 1, robot.position[1])
-                if self.grid_manager.is_valid_position(new_position):
-                    self.grid_manager.move_robot(robot, new_position)
-                else:
-                    # If the new position is invalid, reset to the start (example logic)
-                    self.grid_manager.move_robot(robot, (0, robot.position[1]))
+                robot.move()
 
             self.update_canvas()
             self.root.after(1000, self.update_simulation)  # Update every 1 second

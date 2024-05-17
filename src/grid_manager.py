@@ -13,6 +13,18 @@ class GridManager:
         self.grid = [[None for _ in range(width)] for _ in range(height)]
         self.robots = []
         self.packages = []
+        self.goals = []
+
+    def add_goal(self, goal):
+        """
+        :param goal: The goal to be added.
+        :type goal: Any
+        :return: None
+        """
+
+        if self.is_valid_position(goal.position):
+            self.goals.append(goal)
+            self.grid[goal.position[0]][goal.position[1]] = goal
 
     def add_robot(self, robot):
         """
@@ -60,7 +72,6 @@ class GridManager:
         x, y = position
 
         if 0 <= x < self.width and 0 <= y < self.height:
-            print("Within Limits OK")
             return True
         return False
 
@@ -75,7 +86,6 @@ class GridManager:
         x, y = position
 
         if self.grid[y][x] is not None:
-            print("Occupied Position")
             return True
         return False
 
@@ -89,10 +99,6 @@ class GridManager:
         :rtype: bool
         """
 
-        print(self.grid)
-
-        print(f"is_occupied: {self.is_occupied(position)}")
-        print(f"is_within_limits: {self.is_within_limits(position)}")
         if not self.is_occupied(position) and self.is_within_limits(position):
             return True
         return False

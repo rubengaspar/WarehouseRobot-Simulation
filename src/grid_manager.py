@@ -49,17 +49,51 @@ class GridManager:
             robot.position = new_position
             self.grid[new_position[1]][new_position[0]] = robot
 
+    def is_within_limits(self, position):
+        """
+        Check if the given position is occupied in the grid
+        :param position: a tuple representing the (x, y) coordinates of the position
+        :type position: tuple
+        :return: True if the position is occupied, False otherwise
+        :rtype: bool
+        """
+        x, y = position
+
+        if 0 <= x < self.width and 0 <= y < self.height:
+            print("Within Limits OK")
+            return True
+        return False
+
+    def is_occupied(self, position):
+        """
+        Check if the given position is occupied in the grid
+        :param position: a tuple representing the (x, y) coordinates of the position
+        :type position: tuple
+        :return: True if the position is occupied, False otherwise
+        :rtype: bool
+        """
+        x, y = position
+
+        if self.grid[y][x] is not None:
+            print("Occupied Position")
+            return True
+        return False
+
     def is_valid_position(self, position):
         """
-        Check if the given position is valid within the grid.
+        Check if the given position is valid within the limits of the grid.
 
         :param position: a tuple representing the (x, y) coordinates of the position
         :type position: tuple
         :return: True if the position is valid, False otherwise
         :rtype: bool
         """
-        x, y = position
-        if 0 <= x < self.width and 0 <= y < self.height and self.grid[y][x] is None:
+
+        print(self.grid)
+
+        print(f"is_occupied: {self.is_occupied(position)}")
+        print(f"is_within_limits: {self.is_within_limits(position)}")
+        if not self.is_occupied(position) and self.is_within_limits(position):
             return True
         return False
 

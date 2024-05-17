@@ -27,6 +27,8 @@ class WarehouseGUI:
         - clear_highlight(): Clears the highlighted grid cell.
         - reset(): Resets the warehouse grid.
         - start(): Starts the simulation.
+        - stop(): Stops the simulation.
+        - update_simulation(): Updates the simulation by moving robots.
         - update_canvas(): Updates the canvas with the current grid state.
         - on_resize(event): Handles window resize events.
         - run(): Runs the GUI main loop.
@@ -58,6 +60,7 @@ class WarehouseGUI:
         self.current_action = None
         self.highlight_rect = None
         self.cell_size = 50  # Default cell size
+        self.simulation_running = False
 
         self.create_widgets()
         self.root.bind("<Configure>", self.on_resize)
@@ -65,28 +68,36 @@ class WarehouseGUI:
     def create_widgets(self):
         """
         The create_widgets method is used to initialize and create the widgets for the GUI.
-
         :return: None
         """
         self.canvas = tk.Canvas(self.root)
-        self.canvas.grid(row=0, column=0, columnspan=4, sticky="nsew")
+        self.canvas.grid(row=0, column=1, columnspan=3, sticky="nsew", padx=10, pady=10)
         self.canvas.bind("<Button-1>", self.on_canvas_click)
         self.canvas.bind("<Motion>", self.on_mouse_move)
 
-        self.add_robot_btn = tk.Button(self.root, text="Add Robot", command=self.prepare_add_robot)
-        self.add_robot_btn.grid(row=1, column=0)
+        # Initialize a frame for buttons
+        self.left_frame = tk.Frame(self.root)
+        self.left_frame.grid(row=0, column=0, sticky="nsew")
 
-        self.add_package_btn = tk.Button(self.root, text="Add Package", command=self.prepare_add_package)
-        self.add_package_btn.grid(row=1, column=1)
+        # Add buttons to the frame
+        self.button_add_robot = tk.Button(self.left_frame, text="Add Robot", command=self.prepare_add_robot)
+        self.button_add_robot.pack(side="top", padx=5, pady=5)
 
-        self.reset_btn = tk.Button(self.root, text="Reset", command=self.reset)
-        self.reset_btn.grid(row=1, column=2)
+        self.button_add_package = tk.Button(self.left_frame, text="Add Package", command=self.prepare_add_package)
+        self.button_add_package.pack(side="top", padx=5, pady=5)
 
-        self.start_btn = tk.Button(self.root, text="Start", command=self.start)
-        self.start_btn.grid(row=1, column=3)
+        self.button_start = tk.Button(self.left_frame, text="Start", command=self.start_simulation)
+        self.button_start.pack(side="top", padx=5, pady=5)
+
+        self.button_pause = tk.Button(self.left_frame, text="Pause", command=self.stop_simulation)
+        self.button_pause.pack(side="top", padx=5, pady=5)
+
+        self.button_reset = tk.Button(self.left_frame, text="Reset", command=self.reset)
+        self.button_reset.pack(side="top", padx=5, pady=5)
 
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
+        self.root.grid_columnconfigure(1, weight=1)
 
     def prepare_add_robot(self):
         """
@@ -117,12 +128,14 @@ class WarehouseGUI:
         x = (event.x - self.padding_x) // self.cell_size
         y = (event.y - self.padding_y) // self.cell_size
         position = (x, y)
+
         if self.current_action == 'add_robot':
             robot = Robot(id=len(self.grid_manager.robots), position=position)
             self.grid_manager.add_robot(robot)
         elif self.current_action == 'add_package':
             package = Package(position=position)
             self.grid_manager.add_package(package)
+
         self.current_action = None
         self.root.config(cursor="")
         self.clear_highlight()
@@ -177,13 +190,43 @@ class WarehouseGUI:
         self.grid_manager.reset()
         self.update_canvas()
 
-    def start(self):
+    def start_simulation(self):
         """
-        Start the method.
+        Starts the simulation by setting the simulation_running flag to True
+        and calling the update_simulation method.
 
         :return: None
         """
-        pass
+        self.simulation_running = True
+        self.update_simulation()
+
+    def stop_simulation(self):
+        """
+        Stops the simulation by setting the simulation_running flag to False.
+
+        :return: None
+        """
+        self.simulation_running = False
+
+    def update_simulation(self):
+        """
+        Updates the simulation by moving robots. This method is called
+        periodically as long as the simulation is running.
+
+        :return: None
+        """
+        if self.simulation_running:
+            # Example movement logic: move each robot to the right
+            for robot in self.grid_manager.robots:
+                new_position = (robot.position[0] + 1, robot.position[1])
+                if self.grid_manager.is_valid_position(new_position):
+                    self.grid_manager.move_robot(robot, new_position)
+                else:
+                    # If the new position is invalid, reset to the start (example logic)
+                    self.grid_manager.move_robot(robot, (0, robot.position[1]))
+
+            self.update_canvas()
+            self.root.after(1000, self.update_simulation)  # Update every 1 second
 
     def update_canvas(self):
         """

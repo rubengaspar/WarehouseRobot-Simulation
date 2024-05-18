@@ -17,6 +17,8 @@ class Package:
         """
         self.id = id
         self.position = position
+        self.moving = False
+        self.searchable = True
 
     def find_nearest_goal_from_package(self, goals):
         """

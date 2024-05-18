@@ -74,7 +74,7 @@ class WarehouseGUI:
         self.root = tk.Tk()
         self.root.title("Warehouse Robot Simulation")
 
-        self.grid_manager = GridManager(width=10, height=10)
+        self.grid_manager = GridManager(width=15, height=15)
 
         self.pathfinder = Pathfinding(self.grid_manager)
         self.pathfinding_algorithm = 'a_star'
@@ -82,7 +82,7 @@ class WarehouseGUI:
         self.current_action = None
         self.highlight_rect = None
 
-        self.cell_size = 50  # Default cell size
+        self.cell_size = 0  # Default cell size
         self.simulation_running = False
 
         self.create_widgets()
@@ -266,7 +266,7 @@ class WarehouseGUI:
                 len(self.grid_manager.packages) > 0 and
                 len(self.grid_manager.robots) > 0):
 
-            print("simulation_running being set to true and updating simulation")
+            print("[START] simulation_running being set to true and updating simulation")
             self.simulation_running = True
             self.update_simulation()
         else:
@@ -290,41 +290,29 @@ class WarehouseGUI:
         """
         if self.simulation_running:
 
-            self.counter += 1
-            print(f"Simulation is Running {self.counter}")
-
             for robot in self.grid_manager.robots:
-                #TODO: How to check for
                 if not robot.path:
-                    print("Calculating new path")
+                    print(f"Calculating new path for robot {robot.id}")
                     nearest_package = robot.find_nearest_package(self.grid_manager.packages)
-                    nearest_goal_from_package = nearest_package.find_nearest_goal_from_package(self.grid_manager.goals)
-                    nodes_to_visit = [robot, nearest_package, nearest_goal_from_package]
-                    total_path = []
+                    if nearest_package:
+                        nearest_goal_from_package = nearest_package.find_nearest_goal_from_package(self.grid_manager.goals)
+                        nodes_to_visit = [robot, nearest_package, nearest_goal_from_package]
+                        total_path = []
 
-                    for i in range(len(nodes_to_visit) - 1):
-                        start = nodes_to_visit[i].position
-                        print(f"Start: {start}")
-                        goal = nodes_to_visit[i + 1].position
-                        print(f"Goal: {goal}")
-                        path = Pathfinding(self.grid_manager).a_star(start, goal)
-                        total_path.extend(path[1:])
-                        print(f"Path to add: {total_path}")
+                        for i in range(len(nodes_to_visit) - 1):
+                            start = nodes_to_visit[i].position
+                            goal = nodes_to_visit[i + 1].position
+                            path = Pathfinding(self.grid_manager).a_star(start, goal)
+                            total_path.extend(path[1:])
 
-                    self.robot_paths[robot] = total_path
-                    robot.add_to_path(total_path)
-                    print(f"robot's path: {robot.path}")
+                        self.robot_paths[robot] = total_path
+                        robot.add_to_path(total_path)
+                        print(f"Robot {robot.id}'s path: {robot.path}")
 
-                print(f"Before Update robot's path: {robot.path}")
-                print(f"Robot id: {robot.id} is at position: {robot.position}")
-
-                robot.update_position(self.grid_manager)
-
-                print(f"After Update robot's path: {robot.path}")
-                print(f"Robot id: {robot.id} is at position: {robot.position}")
+                self.grid_manager.move_robots()
 
             self.update_canvas()
-            self.root.after(1000, self.update_simulation)  # Update every 1 second
+            self.root.after(500, self.update_simulation)  # Update every 1 second
 
     def update_canvas(self):
         """
@@ -347,13 +335,15 @@ class WarehouseGUI:
                 y1 = y * self.cell_size + self.padding_y
                 x2 = x1 + self.cell_size
                 y2 = y1 + self.cell_size
+                items = self.grid_manager.grid[y][x]
 
-                if isinstance(self.grid_manager.grid[y][x], Robot):
-                    self.canvas.create_rectangle(x1, y1, x2, y2, fill=Robot.color)
-                elif isinstance(self.grid_manager.grid[y][x], Package):
-                    self.canvas.create_rectangle(x1, y1, x2, y2, fill=Package.color)
-                elif isinstance(self.grid_manager.grid[y][x], Goal):
-                    self.canvas.create_rectangle(x1, y1, x2, y2, fill=Goal.color)
+                if items:
+                    item_height = self.cell_size // len(items)
+                    for i, item in enumerate(items):
+                        item_y1 = y1 + i * item_height
+                        item_y2 = item_y1 + item_height
+                        color = item.color if hasattr(item, 'color') else 'white'
+                        self.canvas.create_rectangle(x1, item_y1, x2, item_y2, fill=color)
 
                 self.canvas.create_rectangle(x1, y1, x2, y2, outline="gray", width=1, stipple="gray12")
 

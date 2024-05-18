@@ -1,7 +1,12 @@
 class GridManager:
+
+    robots = []
+    packages = []
+    goals = []
+
     def __init__(self, width, height):
         """
-        Initialize a new instance of the class GridManager.
+        Initialize an instance of the class with the given width and height.
 
         :param width: The width of the grid.
         :type width: int
@@ -11,26 +16,24 @@ class GridManager:
         self.width = width
         self.height = height
         self.grid = [[None for _ in range(width)] for _ in range(height)]
-        self.robots = []
-        self.packages = []
-        self.goals = []
 
     def add_goal(self, goal):
         """
         :param goal: The goal to be added.
-        :type goal: Any
+        :type goal: Goal
         :return: None
         """
 
         if self.is_valid_position(goal.position):
             self.goals.append(goal)
-            self.grid[goal.position[0]][goal.position[1]] = goal
+            self.grid[goal.position[1]][goal.position[0]] = goal
 
     def add_robot(self, robot):
         """
         Add a robot to the grid at the robot's position.
 
         :param robot: The robot object to be added to the GridManager's robot list
+        :type robot: Robot
         :return: None
         """
         if self.is_valid_position(robot.position):
@@ -42,6 +45,7 @@ class GridManager:
         Add a package to the grid at the package's position.
 
         :param package: The package to be added to the grid.
+        :type package: Package
         :return: None
         """
         if self.is_valid_position(package.position):
@@ -112,3 +116,4 @@ class GridManager:
         self.grid = [[None for _ in range(self.width)] for _ in range(self.height)]
         self.robots = []
         self.packages = []
+        self.goals = []

@@ -1,17 +1,17 @@
 class Goal:
 	"""
-	Initializes an instance of the class Goal.
-
-	:param position: the position of the object
-	:type position: any
+	Initializes an instance of the class Goal
 	"""
-	def __init__(self, position):
-		"""
-		Initializes an instance of the class.
+	color = "green"
 
-		:param position: the position of the object
-		:type position: any
+	def __init__(self, id, position):
 		"""
+		Constructor method for initializing an instance of the class.
+
+		:param id: The identifier of the object.
+		:param position: The position of the object.
+
+		"""
+		self.id = id
 		self.position = position
-		self.color = "green"
 

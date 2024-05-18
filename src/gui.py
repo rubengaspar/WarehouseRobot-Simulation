@@ -2,14 +2,15 @@ import tkinter as tk
 from grid_manager import GridManager
 from robot import Robot
 from package import Package
-from src.goal import Goal
-
+from goal import Goal
+from pathfinding import Pathfinding
 
 class WarehouseGUI:
     """WarehouseGUI class documentation
 
-    This class represents a graphical user interface (GUI) for a warehouse robot simulation. The GUI allows users to interact with the simulation, such as adding robots and packages to the
-    * warehouse grid, starting the simulation, and resetting the grid.
+    This class represents a graphical user interface (GUI) for a warehouse robot simulation. The GUI allows users to
+    interact with the simulation, such as adding robots and packages to the * warehouse grid, starting the
+    simulation, and resetting the grid.
 
     Attributes:
         - root (Tk): The root tkinter window of the GUI.
@@ -55,12 +56,32 @@ class WarehouseGUI:
         Returns:
             None
         """
+
+        self.algorithm_choice = None
+        self.option_menu = None
+        self.canvas = None
+
+        self.button_pause = None
+        self.button_start = None
+        self.button_reset = None
+
+        self.button_select_goal = None
+        self.button_add_package = None
+        self.button_add_robot = None
+
+        self.left_frame = None
+
         self.root = tk.Tk()
         self.root.title("Warehouse Robot Simulation")
 
         self.grid_manager = GridManager(width=10, height=10)
+
+        self.pathfinder = Pathfinding(self.grid_manager)
+        self.pathfinding_algorithm = 'a_star'
+
         self.current_action = None
         self.highlight_rect = None
+
         self.cell_size = 50  # Default cell size
         self.simulation_running = False
 
@@ -100,9 +121,23 @@ class WarehouseGUI:
         self.button_reset = tk.Button(self.left_frame, text="Reset", command=self.reset)
         self.button_reset.pack(side="top", padx=5, pady=5)
 
+        self.algorithm_choice = tk.StringVar(value=self.pathfinding_algorithm)
+        self.option_menu = tk.OptionMenu(self.left_frame,
+                                         self.algorithm_choice,
+                                         'a_star',
+                                         'dijkstra',
+                                         'bfs',
+                                         'dfs',
+                                         'greedy_best_first',
+                                         command=self.set_algorithm)
+        self.option_menu.pack(side="top", padx=5, pady=5)
+
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
         self.root.grid_columnconfigure(1, weight=1)
+
+    def set_algorithm(self, algorithm):
+        self.pathfinding_algorithm = algorithm
 
     def prepare_add_robot(self):
         """
@@ -129,7 +164,7 @@ class WarehouseGUI:
         :return: None
         """
         self.current_action = 'add_goal'
-        self.root.config(cursor='cross')
+        self.root.config(cursor="cross")
 
     def on_canvas_click(self, event):
         """
@@ -147,10 +182,10 @@ class WarehouseGUI:
             robot = Robot(id=len(self.grid_manager.robots), position=position)
             self.grid_manager.add_robot(robot)
         elif self.current_action == 'add_package':
-            package = Package(position=position)
+            package = Package(id=len(self.grid_manager.packages), position=position)
             self.grid_manager.add_package(package)
         elif self.current_action == 'add_goal':
-            goal = Goal(position=position)
+            goal = Goal(id=len(self.grid_manager.goals), position=position)
             self.grid_manager.add_goal(goal)
 
         self.current_action = None
@@ -163,29 +198,26 @@ class WarehouseGUI:
         :param event: The mouse event that triggered the method.
         :return: None
 
-        This method is called when the mouse is moved over the specified area. It calculates the position of the mouse cursor relative to the grid of cells, based on the event coordinates. It
-        * then checks if the current action is either "add_robot" or "add_package". If so, it highlights the position on the grid corresponding to the calculated coordinates.
+        This method is called when the mouse is moved over the specified area. It calculates the position of the
+        mouse cursor relative to the grid of cells, based on the event coordinates. It * then checks if the current
+        action is either "add_robot" or "add_package". If so, it highlights the position on the grid corresponding to
+        the calculated coordinates.
         """
         x = (event.x - self.padding_x) // self.cell_size
         y = (event.y - self.padding_y) // self.cell_size
 
-        action_object_map = {
-            'add_robot': self.robot,
-            'add_package': self.package,
-            'add_goal': self.goal
-        }
-
         if self.current_action == 'add_robot':
-            self.highlight_position((x, y), 'blue')
+            self.highlight_position((x, y), Robot.color)
         elif self.current_action == 'add_package':
-            self.highlight_position((x, y), 'red')
+            self.highlight_position((x, y), Package.color)
         elif self.current_action == 'add_goal':
-            self.highlight_position((x, y), '')
+            self.highlight_position((x, y), Goal.color)
 
     def highlight_position(self, position, color):
         """
         Highlight the given position on the canvas.
 
+        :param color:
         :param position: The position to be highlighted. Should be a tuple in the format (x, y).
         :return: None
         """
@@ -247,10 +279,12 @@ class WarehouseGUI:
         :return: None
         """
         if self.simulation_running:
-            # Example movement logic: move each robot to the right
             for robot in self.grid_manager.robots:
-                robot.move()
-
+                nearest_package = robot.find_nearest_package(self.grid_manager.packages)
+                if nearest_package:
+                    robot.set_goal(nearest_package.position)
+                    robot.calculate_path(self.pathfinder, self.grid_manager)
+                    robot.update_position(self.grid_manager)
             self.update_canvas()
             self.root.after(1000, self.update_simulation)  # Update every 1 second
 
@@ -270,14 +304,19 @@ class WarehouseGUI:
 
         for y in range(self.grid_manager.height):
             for x in range(self.grid_manager.width):
+
                 x1 = x * self.cell_size + self.padding_x
                 y1 = y * self.cell_size + self.padding_y
                 x2 = x1 + self.cell_size
                 y2 = y1 + self.cell_size
+
                 if isinstance(self.grid_manager.grid[y][x], Robot):
-                    self.canvas.create_rectangle(x1, y1, x2, y2, fill="blue")
+                    self.canvas.create_rectangle(x1, y1, x2, y2, fill=Robot.color)
                 elif isinstance(self.grid_manager.grid[y][x], Package):
-                    self.canvas.create_rectangle(x1, y1, x2, y2, fill="green")
+                    self.canvas.create_rectangle(x1, y1, x2, y2, fill=Package.color)
+                elif isinstance(self.grid_manager.grid[y][x], Goal):
+                    self.canvas.create_rectangle(x1, y1, x2, y2, fill=Goal.color)
+
                 self.canvas.create_rectangle(x1, y1, x2, y2, outline="gray", width=1, stipple="gray12")
 
     def on_resize(self, event):
@@ -297,6 +336,7 @@ class WarehouseGUI:
         :return: None
         """
         self.root.mainloop()
+
 
 if __name__ == "__main__":
     app = WarehouseGUI()

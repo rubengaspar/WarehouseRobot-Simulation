@@ -4,12 +4,14 @@ class Package:
     :param position: The position of the package.
     :type position: tuple(float, float)
     """
-    def __init__(self, position):
+    color = "red"
+
+    def __init__(self, id, position):
         """
             Constructor method for initializing an instance of the class.
 
             :param position: The position parameter.
             :type position: Any valid data type.
         """
+        self.id = id
         self.position = position
-        self.color = "yellow"

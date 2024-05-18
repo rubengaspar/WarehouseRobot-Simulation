@@ -66,14 +66,13 @@ class Robot:
         self.waiting_time = 0
         self.time_status_changed = time.time()
 
-    def load(self, package, grid_manager):
+    def load(self, package):
         if len(self.packages) >= self.MAX_PACKAGES:
             print("Can't Load")
         else:
             self.packages.append(package)
             package.moving = True
             package.searchable = False
-            grid_manager.remove_package(package)
 
     def unload(self, grid_manager):
         if self.packages:
@@ -107,7 +106,6 @@ class Robot:
         """
         if len(self.path) > 0:
             next_position = self.path[0]
-            print(f"Robot {self.id}'s Next Position: {next_position}")
             if grid_manager.is_valid_move(next_position):
 
                 if grid_manager.is_occupied_by_other_robot(position=next_position, robot=self):
@@ -124,19 +122,29 @@ class Robot:
                     return self.position
                 else:
                     self.change_status(Status.ACTIVE)
-                    #Remove previous position by setting it to None
-                    grid_manager.grid[self.position[1]][self.position[0]].remove(self)
+                    x, y = self.position
 
-                    #Remove position from path
-                    self.position = next_position
-                    self.path.pop(0)
+                    if self.position == next_position:
+                        self.change_status(Status.IDLE)
+                        return self.position
+                    else:
+                        #Remove previous position by setting it to None
+                        grid_manager.grid[self.position[1]][self.position[0]].remove(self)
 
-                    #Place self at new position in grid manager's grid
-                    grid_manager.grid[next_position[1]][next_position[0]].append(self)
-                    self.wait_times = 0
-                    return next_position
+                        #Remove position from path
+                        self.position = next_position
+                        self.path.pop(0)
+
+                        #Place self at new position in grid manager's grid
+                        grid_manager.grid[next_position[1]][next_position[0]].append(self)
+                        self.wait_times = 0
+                        return next_position
             else:
                 self.path = []
+                return self.position
+        else:
+            self.change_status(Status.IDLE)
+            return self.position
 
 
     def find_nearest_package(self, packages):

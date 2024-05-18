@@ -88,6 +88,8 @@ class WarehouseGUI:
         self.create_widgets()
         self.root.bind("<Configure>", self.on_resize)
 
+        self.robot_paths = {}
+        self.counter = 0
     def create_widgets(self):
         """
         The create_widgets method is used to initialize and create the widgets for the GUI.
@@ -260,8 +262,17 @@ class WarehouseGUI:
 
         :return: None
         """
-        self.simulation_running = True
-        self.update_simulation()
+        if (len(self.grid_manager.goals) > 0 and
+                len(self.grid_manager.packages) > 0 and
+                len(self.grid_manager.robots) > 0):
+
+            print("simulation_running being set to true and updating simulation")
+            self.simulation_running = True
+            self.update_simulation()
+        else:
+            print(f"Number of Robots: {len(self.grid_manager.robots)}")
+            print(f"Number of Packages: {len(self.grid_manager.packages)}")
+            print(f"Number of Goals: {len(self.grid_manager.goals)}")
 
     def stop_simulation(self):
         """
@@ -275,16 +286,43 @@ class WarehouseGUI:
         """
         Updates the simulation by moving robots. This method is called
         periodically as long as the simulation is running.
-
         :return: None
         """
         if self.simulation_running:
+
+            self.counter += 1
+            print(f"Simulation is Running {self.counter}")
+
             for robot in self.grid_manager.robots:
-                nearest_package = robot.find_nearest_package(self.grid_manager.packages)
-                if nearest_package:
-                    robot.set_goal(nearest_package.position)
-                    robot.calculate_path(self.pathfinder, self.grid_manager)
-                    robot.update_position(self.grid_manager)
+                #TODO: How to check for
+                if not robot.path:
+                    print("Calculating new path")
+                    nearest_package = robot.find_nearest_package(self.grid_manager.packages)
+                    nearest_goal_from_package = nearest_package.find_nearest_goal_from_package(self.grid_manager.goals)
+                    nodes_to_visit = [robot, nearest_package, nearest_goal_from_package]
+                    total_path = []
+
+                    for i in range(len(nodes_to_visit) - 1):
+                        start = nodes_to_visit[i].position
+                        print(f"Start: {start}")
+                        goal = nodes_to_visit[i + 1].position
+                        print(f"Goal: {goal}")
+                        path = Pathfinding(self.grid_manager).a_star(start, goal)
+                        total_path.extend(path[1:])
+                        print(f"Path to add: {total_path}")
+
+                    self.robot_paths[robot] = total_path
+                    robot.add_to_path(total_path)
+                    print(f"robot's path: {robot.path}")
+
+                print(f"Before Update robot's path: {robot.path}")
+                print(f"Robot id: {robot.id} is at position: {robot.position}")
+
+                robot.update_position(self.grid_manager)
+
+                print(f"After Update robot's path: {robot.path}")
+                print(f"Robot id: {robot.id} is at position: {robot.position}")
+
             self.update_canvas()
             self.root.after(1000, self.update_simulation)  # Update every 1 second
 

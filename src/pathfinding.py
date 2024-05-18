@@ -35,7 +35,7 @@ class Pathfinding:
         """
         x, y = node
         neighbors = [(x + dx, y + dy) for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]]
-        return [n for n in neighbors if self.grid_manager.is_within_limits(n) and not self.grid_manager.is_occupied(n)]
+        return [n for n in neighbors if self.grid_manager.is_within_limits(n)]
 
     def reconstruct_path(self, came_from, current):
         """
@@ -53,33 +53,12 @@ class Pathfinding:
         return path
 
     def a_star(self, start, goal):
-        """
-        Perform the A* search algorithm to find the shortest path from the start to the goal point.
-
-        :param start: The starting point of the search.
-        :param goal: The goal point to be reached.
-        :return: A list containing the path from the start to the goal point as a sequence of points.
-
-        Algorithm Steps:
-        1. Initialize an open set as a priority queue.
-        2. Push the starting point into the open set with a priority of 0.
-        3. Initialize dictionaries to keep track of the path, g-scores, and f-scores.
-        4. While the open set is not empty:
-            a. Pop the point with the lowest f-score from the open set.
-            b. If the current point is the goal point, reconstruct the path and return it.
-            c. Get the neighboring points of the current point.
-            d. For each neighbor:
-                i. Calculate the tentative g-score by adding 1 to the g-score of the current point.
-                ii. If the neighbor is not in the g-score dictionary or the tentative g-score is lower than the current g-score, update the path, g-score, and f-score for the neighbor.
-                iii. Push the neighbor into the open set with its f-score.
-        5. If the goal point is not reached, return an empty list.
-
-        """
         open_set = []
         heapq.heappush(open_set, (0, start))
         came_from = {}
         g_score = {start: 0}
         f_score = {start: self.heuristic(start, goal)}
+        close_set = []
 
         while open_set:
             current = heapq.heappop(open_set)[1]
@@ -87,9 +66,13 @@ class Pathfinding:
             if current == goal:
                 return self.reconstruct_path(came_from, current)
 
+            close_set.append(current)
+
             neighbors = self.get_neighbors(current)
 
             for neighbor in neighbors:
+                if neighbor in close_set:
+                    continue
                 tentative_g_score = g_score[current] + 1
 
                 if neighbor not in g_score or tentative_g_score < g_score[neighbor]:

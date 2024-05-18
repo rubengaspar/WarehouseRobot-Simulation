@@ -52,19 +52,6 @@ class GridManager:
             self.packages.append(package)
             self.grid[package.position[1]][package.position[0]] = package
 
-    def move_robot(self, robot, new_position):
-        """
-        Moves the given robot to the new position on the grid.
-
-        :param robot: The robot object to move.
-        :param new_position: The new position to move the robot to.
-        :return: None
-        """
-        if self.is_valid_position(new_position):
-            self.grid[robot.position[1]][robot.position[0]] = None
-            robot.position = new_position
-            self.grid[new_position[1]][new_position[0]] = robot
-
     def is_within_limits(self, position):
         """
         Check if the given position is occupied in the grid

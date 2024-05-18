@@ -55,17 +55,8 @@ class Robot:
         """
         self.goal = goal
 
-    def calculate_path(self, pathfinder, grid_manager):
-        """
-        Calculate the path from the current position to the goal using A* algorithm.
-
-        :param pathfinder: An instance of the pathfinding class that provides the A* algorithm implementation.
-        :param grid_manager: An instance of the grid manager class that manages the grid and obstacles.
-        :return: None
-
-        """
-        if self.goal:
-            self.path = pathfinder.a_star(self.position, self.goal)
+    def add_to_path(self, path_to_add):
+        self.path.extend(path_to_add)
 
     def update_position(self, grid_manager):
         """
@@ -80,12 +71,14 @@ class Robot:
         path by assigning an * empty list to the 'path' attribute of the current object, which indicates that the
         path is blocked and needs to be recalculated.
         """
-        if self.path:
+        if len(self.path) > 0:
             next_position = self.path.pop(0)
+            print(f"Next Position: {next_position}")
             if grid_manager.is_valid_position(next_position):
-                grid_manager.move_robot(self, next_position)
+                self.position = next_position
             else:
-                self.path = []  # Recalculate path if blocked
+                self.path = []
+
 
     def find_nearest_package(self, packages):
         """

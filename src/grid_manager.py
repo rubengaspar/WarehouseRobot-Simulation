@@ -1,13 +1,16 @@
-
 from robot import Robot, Status
 from package import Package
 from goal import Goal
+from src.wall import Wall
+
+
 class GridManager:
 
     robots = []
     packages = []
     packages_loaded = []
     goals = []
+    walls = []
 
     def __init__(self, width, height):
 
@@ -71,6 +74,26 @@ class GridManager:
                 return item
         return None
 
+    def add_wall(self, wall):
+        x, y = wall.position
+        if self.is_valid_move(wall.position):
+            self.walls.append(wall)
+            self.grid[y][x].append(wall)
+
+    def is_occupied_by_wall(self, position):
+        x, y = position
+        items = self.grid[y][x]
+        for item in items:
+            if isinstance(item, Wall):
+                return True
+        return False
+
+    # Update is_valid_move function to consider walls
+    def is_valid_move(self, position):
+        if not self.is_occupied_by_wall(position) and not self.is_occupied_by_robot(position) and self.is_within_limits(position):
+            return True
+        return False
+
     def is_within_limits(self, position):
 
         x, y = position
@@ -119,19 +142,6 @@ class GridManager:
                 if isinstance(item, Goal):
                     return True
         return False
-
-    def get_object(self, position):
-        x, y = position
-        return self.grid[y][x]
-
-    def clear_position(self, position):
-
-        x, y = position
-        if self.grid[y][x] is None:
-            print(f"Trying to clear a position on the grid that is: {self.grid[y][x]}")
-        else:
-            self.grid[y][x] = []
-
 
     def is_valid_move(self, position):
 

@@ -170,26 +170,9 @@ class WarehouseGUI:
     def update_simulation(self):
         if self.simulation_running:
             for robot in self.grid_manager.robots:
-                if not robot.path:
-                    print(f"Calculating new path for robot {robot.id}")
-                    nearest_package = robot.find_nearest_package(self.grid_manager.packages)
-                    if nearest_package:
-                        nearest_goal_from_package = nearest_package.find_nearest_goal_from_package(self.grid_manager.goals)
-                        nodes_to_visit = [robot, nearest_package, nearest_goal_from_package]
-                        total_path = []
+                robot.calculate_path(self.grid_manager)
 
-                        for i in range(len(nodes_to_visit) - 1):
-                            start = nodes_to_visit[i].position
-                            goal = nodes_to_visit[i + 1].position
-                            path = Pathfinding(self.grid_manager).a_star(start, goal)
-                            total_path.extend(path[1:])
-
-                        self.robot_paths[robot] = total_path
-                        robot.add_to_path(total_path)
-                        print(f"Robot {robot.id}'s path: {robot.path}")
-
-                self.grid_manager.move_robots()
-
+            self.grid_manager.move_robots()
             self.update_canvas()
             self.root.after(500, self.update_simulation)
 

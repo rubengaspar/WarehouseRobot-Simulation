@@ -1,6 +1,9 @@
 from enum import Enum
 import time
 
+from src.pathfinding import Pathfinding
+
+
 class Status(Enum):
     OFF = "off"
     IDLE = "idle"
@@ -65,6 +68,24 @@ class Robot:
         self.off_time = 0
         self.waiting_time = 0
         self.time_status_changed = time.time()
+
+    def calculate_path(self, grid_manager):
+        if not self.path:
+            print(f"Calculating new path for robot {self.id}")
+            nearest_package = self.find_nearest_package(grid_manager.packages)
+            if nearest_package:
+                nearest_goal_from_package = nearest_package.find_nearest_goal_from_package(grid_manager.goals)
+                nodes_to_visit = [self, nearest_package, nearest_goal_from_package]
+                total_path = []
+
+                for i in range(len(nodes_to_visit) - 1):
+                    start = nodes_to_visit[i].position
+                    goal = nodes_to_visit[i + 1].position
+                    path = Pathfinding(grid_manager).a_star(start, goal)
+                    total_path.extend(path[1:])
+
+                self.add_to_path(total_path)
+                print(f"Robot {self.id}'s path: {self.path}")
 
     def load(self, package):
         if len(self.packages) >= self.MAX_PACKAGES:

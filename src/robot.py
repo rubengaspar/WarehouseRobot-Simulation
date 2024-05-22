@@ -1,6 +1,5 @@
 from enum import Enum
 import time
-
 from src.pathfinding import Pathfinding
 
 
@@ -9,55 +8,15 @@ class Status(Enum):
     IDLE = "idle"
     ACTIVE = "active"
 
+
 class Robot:
-    """
-    :class:`Robot`
-
-    This class represents a robot object with various properties and methods.
-
-    Attributes:
-        color (str): The color of the robot (default: 'blue').
-        id (any): The unique identifier for the robot.
-        position (tuple(float, float)): The current position of the robot.
-        goal: The goal position for the robot.
-        path: The calculated path from the current position to the goal.
-
-    Methods:
-        __init__(self, id, position)
-            This method is the constructor for the class. Initializes the robot with the given id and position.
-
-        set_goal(self, goal)
-            Sets the given goal as the new value for the `goal` attribute.
-
-        calculate_path(self, pathfinder, grid_manager)
-            Calculates the path from the current position to the goal using the A* algorithm.
-
-        update_position(self, grid_manager)
-            Updates the position of the robot based on the given grid_manager.
-
-        find_nearest_package(self, packages)
-            Finds the nearest package from a given list of packages.
-
-        find_nearest_goal(self, goals)
-            Finds the nearest goal from a list of goals.
-    """
     color = 'blue'
     packages = []
     path = []
-    MAX_PACKAGES = 5
-    MAX_WAIT = 10
 
-    def __init__(self, id, position, max_packages=1):
-        """
-        This method is the constructor for the class.
-
-        :param id: The unique identifier for the object.
-        :type id: any
-        :param position: The current position of the object.
-        :type position: tuple(float, float)
-
-        :return: None
-        """
+    def __init__(self, id, position, max_packages=5, max_wait=10):
+        self.max_packages = max_packages
+        self.max_wait = max_wait
         self.id = id
         self.position = position
         self.goal = None
@@ -73,11 +32,23 @@ class Robot:
         if not self.path:
             print(f"Calculating new path for robot {self.id}")
             nearest_package = self.find_nearest_package(grid_manager.packages)
-            if nearest_package:
-                nearest_goal_from_package = nearest_package.find_nearest_goal_from_package(grid_manager.goals)
-                nodes_to_visit = [self, nearest_package, nearest_goal_from_package]
-                total_path = []
 
+            if nearest_package:
+                nodes_to_visit = [self, nearest_package]
+
+                while True:
+                    last_visited = nodes_to_visit[-1]
+                    nearest_package_from_last_visited = last_visited.find_nearest_package(grid_manager.packages)
+                    nearest_goal_from_last_visited = last_visited.find_nearest_goal(grid_manager.goals)
+                    if nearest_goal_from_last_visited.position.distance_to(
+                            last_visited.position) < nearest_package_from_last_visited.position.distance_to(
+                            last_visited.position):
+                        nodes_to_visit.append(nearest_goal_from_last_visited)
+                        break
+                    else:
+                        nodes_to_visit.append(nearest_package_from_last_visited)
+
+                total_path = []
                 for i in range(len(nodes_to_visit) - 1):
                     start = nodes_to_visit[i].position
                     goal = nodes_to_visit[i + 1].position
@@ -86,6 +57,10 @@ class Robot:
 
                 self.add_to_path(total_path)
                 print(f"Robot {self.id}'s path: {self.path}")
+            else:
+                print("No packages found")
+        else:
+            print(f"Robot {self.id} already has a path")
 
     def load(self, package):
         if len(self.packages) >= self.MAX_PACKAGES:
@@ -189,6 +164,7 @@ class Robot:
             return nearest_package
         else:
             return None
+
     def find_nearest_goal(self, goals):
         """
         Find the nearest goal from a list of goals.

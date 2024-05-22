@@ -20,7 +20,7 @@ class Package:
         self.moving = False
         self.searchable = True
 
-    def find_nearest_goal_from_package(self, goals):
+    def find_nearest_goal(self, goals):
         """
         Find the nearest goal from a given list of goals based on the current position of the package.
 
@@ -39,3 +39,25 @@ class Package:
                 min_distance = distance
 
         return nearest_goal
+
+    def find_nearest_package(self, packages):
+        """
+        Finds the nearest package from a given list of packages.
+
+        :param packages: A list of package objects.
+        :return: The nearest package object.
+        """
+        nearest_package = None
+        min_distance = float('inf')
+        if packages:
+            for package in packages:
+                if package.searchable:
+                    distance = abs(self.position[0] - package.position[0]) + abs(self.position[1] - package.position[1])
+
+                    if distance < min_distance:
+                        nearest_package = package
+                        min_distance = distance
+
+            return nearest_package
+        else:
+            return None

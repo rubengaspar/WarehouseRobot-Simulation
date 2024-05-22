@@ -1,5 +1,5 @@
-from gui import WarehouseGUI
+from gui import GUI
 
 if __name__ == "__main__":
-    app = WarehouseGUI()
+    app = GUI()
     app.run()

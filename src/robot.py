@@ -1,7 +1,10 @@
 # robot.py
+import math
 from enum import Enum
 import time
 from typing import TYPE_CHECKING
+
+from src.pathfinding import Pathfinding
 
 if TYPE_CHECKING:
     from src.position import Position
@@ -9,8 +12,9 @@ if TYPE_CHECKING:
 
 class Status(Enum):
     OFF = "off"
-    IDLE = "idle"
     ACTIVE = "active"
+    IDLE = "idle"
+    BLOCKED = "blocked"
 
 
 class Robot:
@@ -18,18 +22,21 @@ class Robot:
     packages = []
     path = []
 
-    def __init__(self, id, position, max_packages=5, max_wait=10):
-        self.max_packages = max_packages
-        self.max_wait = max_wait
+    def __init__(self, id, position, max_packages=5, max_blocked_times=10):
+
         self.id = id
         self.position = position
-        self.goal = None
-        self.wait_times = 0
+
+        self.max_packages = max_packages
+        self.blocked_times = 0
+        self.max_blocked_times = max_blocked_times
+
         self.status = Status.IDLE
-        self.idle_time = 0
-        self.active_time = 0
         self.off_time = 0
-        self.waiting_time = 0
+        self.active_time = 0
+        self.idle_time = 0
+
+        self.blocked_time = 0
         self.time_status_changed = time.time()
 
     def calculate_path(self, grid_manager):
@@ -80,7 +87,7 @@ class Robot:
             if grid_manager.has_goal(self.position):
                 # Unload packages to the goal
                 for package in self.packages:
-                    #TODO for later: Add logic for package to have specific destination goal to be checked
+                    #TODO: [for later] Add logic for package to have specific destination goal to be checked
                     package.moving = False
                     grid_manager.deliver_package_at_goal(package, self.position)
                 self.packages.clear()  # all packages have been delivered, clear the list
@@ -97,47 +104,40 @@ class Robot:
     def add_to_path(self, path_to_add):
         self.path.extend(path_to_add)
 
-    def update_position(self, grid_manager):
-        """
-        Updates the position of the robot on the grid.
-
-        :param grid_manager: The grid manager object.
-        :return: The new position of the robot.
-        """
+    def update_position(self, grid):
         if len(self.path) > 0:
             next_position = self.path[0]
-            if grid_manager.is_valid_move(next_position):
-
-                if grid_manager.is_occupied_by_other_robot(position=next_position, robot=self):
+            if grid.is_valid_move(next_position):
+                if grid.is_occupied_by_other_robot(position=next_position, robot=self):
                     self.change_status(Status.IDLE)
                     #Next step occupied by robot, waiting
-                    if self.wait_times > self.MAX_WAIT:
+                    if self.blocked_times > self.max_blocked_times:
                         print(f"[Robot-{self.id}] I've been waiting for too long bitch, i'll get angry")
-                        self.wait_times = 0
+                        self.blocked_times = 0
                         self.color = "magenta"
 
-                    print(f"[Robot-{self.id}] Waiting... {self.wait_times}/{self.MAX_WAIT}")
+                    print(f"[Robot-{self.id}] Waiting... {self.blocked_times}/{self.max_blocked_times}")
 
-                    self.wait_times += 1
+                    self.blocked_times += 1
                     return self.position
                 else:
                     self.change_status(Status.ACTIVE)
-                    x, y = self.position
+                    x, y = self.position.x, self.position.y
 
                     if self.position == next_position:
                         self.change_status(Status.IDLE)
                         return self.position
                     else:
                         #Remove previous position by setting it to None
-                        grid_manager.grid[self.position[1]][self.position[0]].remove(self)
+                        grid.grid[self.position[1]][self.position[0]].remove(self)
 
                         #Remove position from path
                         self.position = next_position
                         self.path.pop(0)
 
                         #Place self at new position in grid manager's grid
-                        grid_manager.grid[next_position[1]][next_position[0]].append(self)
-                        self.wait_times = 0
+                        grid.grid[next_position[1]][next_position[0]].append(self)
+                        self.blocked_times = 0
                         return next_position
             else:
                 self.path = []
@@ -146,20 +146,15 @@ class Robot:
             self.change_status(Status.IDLE)
             return self.position
 
-
     def find_nearest_package(self, packages):
-        """
-        Finds the nearest package from a given list of packages.
-
-        :param packages: A list of package objects.
-        :return: The nearest package object.
-        """
         nearest_package = None
         min_distance = float('inf')
         if packages:
             for package in packages:
                 if package.searchable:
-                    distance = abs(self.position[0] - package.position[0]) + abs(self.position[1] - package.position[1])
+                    # size of the vector between two points
+                    distance = math.sqrt(abs(self.position.x - package.position.x) +
+                                         abs(self.position.y - package.position.y))
 
                     if distance < min_distance:
                         nearest_package = package
@@ -170,16 +165,11 @@ class Robot:
             return None
 
     def find_nearest_goal(self, goals):
-        """
-        Find the nearest goal from a list of goals.
-
-        :param goals: A list of goals represented as coordinate pairs [x, y].
-        :return: The nearest goal from the list of goals.
-        """
         nearest_goal = None
         min_distance = float('inf')
         for goal in goals:
-            distance = abs(self.position[0] - goal[0]) + abs(self.position[1] - goal[1])
+            distance = math.sqrt(abs(self.position.x - goal.position.x) +
+                                 abs(self.position.y - goal.position.y))
             if distance < min_distance:
                 nearest_goal = goal
                 min_distance = distance
@@ -201,17 +191,13 @@ class Robot:
             self.active_time += time_in_current_status
         elif self.status == Status.OFF:
             self.off_time += time_in_current_status
+        elif self.status == Status.BLOCKED:
+            self.blocked_time += time_in_current_status
 
         self.status = new_status
         self.time_status_changed = time.time()
 
     def get_status_time(self, status: Status):
-        """
-        This method returns the time of the specified status
-        :return: The time of the status
-        :rtype: float
-        """
-
         if not isinstance(status, Status):
             print("Invalid status. Must be an instance of Status enum.")
             return

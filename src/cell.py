@@ -1,3 +1,4 @@
+#cell.py
 from src.connection import Connection
 from src.goal import Goal
 from src.package import Package
@@ -7,7 +8,7 @@ from src.robot import Robot
 
 class Cell:
 
-    def __init__(self, position: Position, max_load=10):
+    def __init__(self, position: 'Position', max_load=10):
         self.position = position
         self.connections = []
         self.robot = None
@@ -30,19 +31,15 @@ class Cell:
             return True
         return False
 
-    def add_robot(self, robot: Robot):
-        if not self.robot:
+    def add_robot(self, robot: 'Robot'):
+        if self.robot is None:
             self.robot = robot
-            return True
-        return False
 
-    def add_package(self, package: Package):
+    def add_package(self, package: 'Package'):
         if len(self.packages) < self.max_load:
             self.packages.append(package)
-            return True
-        return False
 
-    def remove_package(self, package: Package):
+    def remove_package(self, package: 'Package'):
         if self.packages:
             updated_packages = []
             for p in self.packages:
@@ -50,22 +47,23 @@ class Cell:
                     updated_packages.append(p)
 
             self.packages = updated_packages
-            return True
-        return False
 
-    def add_goal(self, goal: Goal):
+    def add_goal(self, goal: 'Goal'):
         if not self.goal:
             self.goal = goal
-            return True
-        return False
 
-    def is_occupied_by_robot(self):
+    def has_robot(self):
         return self.robot is not None
 
     def has_package(self):
-        return self.packages is not None
+        return len(self.packages) > 0
 
-    def is_occupied_by_goal(self):
+    def can_load_package(self):
+        if len(self.packages) < self.max_load:
+            return True
+        return False
+
+    def has_goal(self):
         return self.goal is not None
 
     def reset(self):
@@ -74,4 +72,4 @@ class Cell:
         self.goal = None
 
     def __repr__(self):
-        return f"Cell({self.position}, Robot: {self.robot}, Goal: {self.goal}, Package: {self.package})"
+        return f"Cell({self.position}, Robot: {self.robot}, Goal: {self.goal}, Package: {self.packages})"

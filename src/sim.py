@@ -1,7 +1,7 @@
 # sim.py
 
-from grid import GridManager
 from gui import GUI
+from src.grid import Grid
 
 
 class Simulation:
@@ -31,17 +31,3 @@ class Simulation:
 						cell.robot.calculate_path(self.grid_manager)
 
 			self.grid_manager.move_robots()
-
-
-# Example of running the simulation
-if __name__ == "__main__":
-	grid_manager = GridManager(width=15, height=15)
-	simulation = Simulation(grid_manager)
-	gui = GUI(grid_manager)
-
-	# Bind simulation controls to the GUI (example only, more integration needed)
-	gui.button_start.config(command=simulation.start_simulation)
-	gui.button_pause.config(command=simulation.stop_simulation)
-	gui.button_reset.config(command=simulation.reset)
-
-	gui.run()

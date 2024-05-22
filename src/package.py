@@ -1,34 +1,21 @@
-class Package:
-    """Initialize the package with a position.
+# package.py
+from typing import List, TYPE_CHECKING
 
-    :param position: The position of the package.
-    :type position: tuple(float, float)
-    """
+if TYPE_CHECKING:
+    from src.position import Position
+    from src.goal import Goal
+
+
+class Package:
     color = "red"
 
-    def __init__(self, id, position):
-        """
-        Constructor method for initializing an instance of the class.
-
-        :param id: The identifier for the package.
-        :type id: Any valid data type.
-        :param position: The position parameter.
-        :type position: tuple(float, float)
-        """
+    def __init__(self, id, position: 'Position'):
         self.id = id
         self.position = position
         self.moving = False
         self.searchable = True
 
-    def find_nearest_goal(self, goals):
-        """
-        Find the nearest goal from a given list of goals based on the current position of the package.
-
-        :param goals: A list of goal objects.
-        :type goals: list
-        :return: The nearest goal object.
-        :rtype: Goal
-        """
+    def find_nearest_goal(self, goals: List['Goal']):
         min_distance = float('inf')
         nearest_goal = None
 
@@ -40,13 +27,7 @@ class Package:
 
         return nearest_goal
 
-    def find_nearest_package(self, packages):
-        """
-        Finds the nearest package from a given list of packages.
-
-        :param packages: A list of package objects.
-        :return: The nearest package object.
-        """
+    def find_nearest_package(self, packages: List['Package']):
         nearest_package = None
         min_distance = float('inf')
         if packages:

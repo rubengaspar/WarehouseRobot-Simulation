@@ -1,7 +1,11 @@
+# robot.py
 from enum import Enum
 import time
-from src.pathfinding import Pathfinding
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from src.position import Position
+    from src.goal import Goal
 
 class Status(Enum):
     OFF = "off"
@@ -73,7 +77,7 @@ class Robot:
     def unload(self, grid_manager):
         if self.packages:
             # check if unload position is a goal or not
-            if grid_manager.is_occupied_by_goal(self.position):
+            if grid_manager.has_goal(self.position):
                 # Unload packages to the goal
                 for package in self.packages:
                     #TODO for later: Add logic for package to have specific destination goal to be checked

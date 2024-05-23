@@ -17,7 +17,7 @@ class TestPathfinding(unittest.TestCase):
 		start = (0, 0)
 		goal = (2, 2)
 		self.pathfinding.heuristic = Mock(return_value=1)
-		self.pathfinding.get_neighbors = Mock(return_value=[(1, 1), (2, 2)])
+		self.pathfinding.get_neighbours = Mock(return_value=[(1, 1), (2, 2)])
 		self.pathfinding.reconstruct_path = Mock(return_value=[(0, 0), (1, 1), (2, 2)])  # just a mock path
 		result = self.pathfinding.a_star(start, goal)
 		self.assertEqual(result, [(0, 0), (1, 1), (2, 2)])
@@ -26,7 +26,7 @@ class TestPathfinding(unittest.TestCase):
 		start = (0, 0)
 		goal = (3, 3)
 		self.pathfinding.heuristic = Mock(return_value=sys.maxsize)
-		self.pathfinding.get_neighbors = Mock(return_value=[(1, 1), (2, 2)])  # no way to (3, 3)
+		self.pathfinding.get_neighbours = Mock(return_value=[(1, 1), (2, 2)])  # no way to (3, 3)
 		result = self.pathfinding.a_star(start, goal)
 		self.assertEqual(result, [])
 

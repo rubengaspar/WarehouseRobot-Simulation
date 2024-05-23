@@ -10,7 +10,16 @@ if TYPE_CHECKING:
     from src.position import Position
     from src.goal import Goal
 
+
 class Status(Enum):
+    """
+    Enumeration class representing the possible status values.
+
+    :cvar OFF: Represents the "off" status.
+    :cvar ACTIVE: Represents the "active" status.
+    :cvar IDLE: Represents the "idle" status.
+    :cvar BLOCKED: Represents the "blocked" status, unable to move due to obstacles.
+    """
     OFF = "off"
     ACTIVE = "active"
     IDLE = "idle"
@@ -39,31 +48,32 @@ class Robot:
         self.blocked_time = 0
         self.time_status_changed = time.time()
 
-    def calculate_path(self, grid_manager):
+    # TODO: Think if it is needed to change Pathing Logic?
+    def calculate_path(self, grid):
         if not self.path:
             print(f"Calculating new path for robot {self.id}")
-            nearest_package = self.find_nearest_package(grid_manager.packages)
+            nearest_package = self.find_nearest_package(grid.packages)
 
             if nearest_package:
-                nodes_to_visit = [self, nearest_package]
+                checkpoints = [self, nearest_package]
 
                 while True:
-                    last_visited = nodes_to_visit[-1]
-                    nearest_package_from_last_visited = last_visited.find_nearest_package(grid_manager.packages)
-                    nearest_goal_from_last_visited = last_visited.find_nearest_goal(grid_manager.goals)
+                    last_visited = checkpoints[-1]
+                    nearest_package_from_last_visited = last_visited.find_nearest_package(grid.packages)
+                    nearest_goal_from_last_visited = last_visited.find_nearest_goal(grid.goals)
                     if nearest_goal_from_last_visited.position.distance_to(
                             last_visited.position) < nearest_package_from_last_visited.position.distance_to(
                             last_visited.position):
-                        nodes_to_visit.append(nearest_goal_from_last_visited)
+                        checkpoints.append(nearest_goal_from_last_visited)
                         break
                     else:
-                        nodes_to_visit.append(nearest_package_from_last_visited)
+                        checkpoints.append(nearest_package_from_last_visited)
 
                 total_path = []
-                for i in range(len(nodes_to_visit) - 1):
-                    start = nodes_to_visit[i].position
-                    goal = nodes_to_visit[i + 1].position
-                    path = Pathfinding(grid_manager).a_star(start, goal)
+                for i in range(len(checkpoints) - 1):
+                    start = checkpoints[i].position
+                    goal = checkpoints[i + 1].position
+                    path = Pathfinding(grid).a_star(start, goal)
                     total_path.extend(path[1:])
 
                 self.add_to_path(total_path)

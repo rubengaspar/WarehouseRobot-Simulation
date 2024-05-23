@@ -100,7 +100,7 @@ class GUI:
             self.canvas.delete(self.highlight_rect)
 
         x, y = position.x, position.y
-        if self.grid.is_within_limits(position):
+        if self.grid.is_inside_grid(position):
             self.highlight_rect = self.canvas.create_rectangle(
                 x * self.cell_size + self.padding_x,
                 y * self.cell_size + self.padding_y,

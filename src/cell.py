@@ -31,6 +31,9 @@ class Cell:
             return True
         return False
 
+    #def get_valid_connections(self):
+        # TODO: needed?
+
     def add_robot(self, robot: 'Robot'):
         if self.robot is None:
             self.robot = robot

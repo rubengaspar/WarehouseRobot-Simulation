@@ -66,12 +66,12 @@ class Grid:
 		x, y = position.x, position.y
 		return self.grid[y][x]
 
-	def is_within_limits(self, position: Position):
+	def is_inside_grid(self, position: Position):
 		x, y = position.x, position.y
 		return 0 <= x < self.width and 0 <= y < self.height
 
 	def is_valid_move(self, position: Position):
-		return self.is_within_limits(position) and not self.get_cell(position).has_robot()
+		return self.is_inside_grid(position) and not self.get_cell(position).has_robot()
 
 	def move_robots(self):
 		for row in self.grid:

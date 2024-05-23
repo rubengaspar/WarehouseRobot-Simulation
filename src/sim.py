@@ -5,13 +5,12 @@ from src.grid import Grid
 
 
 class Simulation:
-	def __init__(self, grid_manager):
-		self.grid_manager = grid_manager
+	def __init__(self, grid: Grid):
+		self.grid = grid
 		self.simulation_running = False
 
 	def start_simulation(self):
-		if len(self.grid_manager.goals) > 0 and len(self.grid_manager.packages) > 0 and len(
-				self.grid_manager.robots) > 0:
+		if len(self.grid.goals) > 0 and len(self.grid.packages) > 0 and len(self.grid.robots) > 0:
 			self.simulation_running = True
 			self.update_simulation()
 		else:
@@ -21,13 +20,13 @@ class Simulation:
 		self.simulation_running = False
 
 	def reset(self):
-		self.grid_manager.reset()
+		self.grid.reset()
 
 	def update_simulation(self):
 		if self.simulation_running:
-			for row in self.grid_manager.grid:
+			for row in self.grid.grid:
 				for cell in row:
 					if cell.robot:
-						cell.robot.calculate_path(self.grid_manager)
+						cell.robot.calculate_path(self.grid)
 
-			self.grid_manager.move_robots()
+			self.grid.move_robots()
